@@ -1,11 +1,17 @@
 import asyncio
 import json
+import os
 from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig
 from bs4 import BeautifulSoup
 from db_simple import DossiersManager
 import re
 
 async def login_and_scrape_all():
+    # Configuration du proxy français Bright Data
+    proxy_server = os.getenv('PROXY_SERVER', 'brd.superproxy.io:33335')
+    proxy_username = os.getenv('PROXY_USERNAME', 'brd-customer-hl_7b254e46-zone-mhkprojet5')
+    proxy_password = os.getenv('PROXY_PASSWORD', 'b951ez7og4bb')
+    
     browser_config = BrowserConfig(
         headless=True,  # Mode headless pour Docker/Railway
         verbose=False,
@@ -14,11 +20,10 @@ async def login_and_scrape_all():
             '--disable-dev-shm-usage',
             '--no-sandbox',
             '--disable-setuid-sandbox',
-            '--disable-web-security',
-            '--disable-features=IsolateOrigins,site-per-process',
             '--lang=fr-FR'  # Langue française
         ],
-        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"  # User-agent Windows français
+        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        proxy=f"http://{proxy_username}:{proxy_password}@{proxy_server}"
     )
     
     all_dossiers = []
