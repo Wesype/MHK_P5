@@ -137,7 +137,19 @@ async def login_and_scrape_all():
                 soup = BeautifulSoup(result.html, 'html.parser')
                 dossiers = soup.find_all('div', class_='card')
                 
-                print(f" {len(dossiers)} dossiers")
+                # Debug: vérifier si on est toujours connecté
+                if len(dossiers) == 0:
+                    # Vérifier si on est redirigé vers la page de login
+                    login_form = soup.find('form', action='/users/sign_in')
+                    if login_form:
+                        print(f"❌ Session perdue - redirection vers login")
+                    else:
+                        # Sauvegarder le HTML pour debug
+                        with open(f'debug_page_{statut_param}_{page_num}.html', 'w', encoding='utf-8') as f:
+                            f.write(result.html[:5000])  # Premiers 5000 caractères
+                        print(f"⚠️  0 dossiers (HTML sauvegardé pour debug)")
+                else:
+                    print(f"✅ {len(dossiers)} dossiers")
                 
                 for dossier in dossiers:
                     try:
