@@ -7,25 +7,18 @@ from db_simple import DossiersManager
 import re
 
 async def login_and_scrape_all():
-    # Configuration du proxy français Bright Data avec session sticky
-    proxy_server = os.getenv('PROXY_SERVER')
-    proxy_username = os.getenv('PROXY_USERNAME')
-    proxy_password = os.getenv('PROXY_PASSWORD')
+    # Configuration du proxy français Bright Data - Paris
+    proxy_server = os.getenv('PROXY_SERVER', 'brd.superproxy.io:33335')
+    proxy_username = os.getenv('PROXY_USERNAME', 'brd-customer-hl_7b254e46-zone-mhkprojet5-country-fr-city-paris')
+    proxy_password = os.getenv('PROXY_PASSWORD', 'b951ez7og4bb')
     
-    # Construire la config du proxy si les variables sont définies
-    proxy_config = None
-    if proxy_server and proxy_username and proxy_password:
-        # Ajouter un session ID pour garder la même IP pendant toute la session
-        import random
-        session_id = random.randint(1000000, 9999999)
-        proxy_username_with_session = f"{proxy_username}-session-{session_id}"
-        
-        proxy_config = {
-            'server': f"http://{proxy_server}",
-            'username': proxy_username_with_session,
-            'password': proxy_password
-        }
-        print(f"🌍 Utilisation du proxy français avec session sticky: {proxy_server} (session-{session_id})")
+    # Construire la config du proxy
+    proxy_config = {
+        'server': f"http://{proxy_server}",
+        'username': proxy_username,
+        'password': proxy_password
+    }
+    print(f"🌍 Utilisation du proxy Paris, France: {proxy_server}")
     
     browser_config = BrowserConfig(
         headless=True,  # Mode headless pour Docker/Railway
