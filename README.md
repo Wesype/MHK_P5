@@ -12,12 +12,11 @@
 
 ### Variables d'environnement sur Railway
 
-Railway injecte automatiquement les variables PostgreSQL :
-- `DATABASE_URL` - URL complète de connexion
-- `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`
+**À configurer manuellement :**
+1. `DATABASE_URL` = `${{Postgres.DATABASE_URL}}` (référence au service PostgreSQL)
+2. `WEBHOOK_URL` = URL de votre webhook n8n
 
-Ajouter manuellement :
-- `WEBHOOK_URL` - URL du webhook n8n
+C'est tout ! Railway gère automatiquement la connexion entre les services.
 
 ### Test en local avec Docker
 

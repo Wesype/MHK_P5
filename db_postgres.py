@@ -12,12 +12,11 @@ from send_webhook import send_to_webhook
 # Charger les variables d'environnement
 load_dotenv()
 
-# Configuration PostgreSQL - Railway injecte automatiquement ces variables
-# Ou utilise DATABASE_URL si disponible
+# Configuration PostgreSQL - Railway injecte DATABASE_URL automatiquement
 DATABASE_URL = os.getenv('DATABASE_URL')
 
 if DATABASE_URL:
-    # Parser DATABASE_URL pour Railway
+    # Parser DATABASE_URL pour Railway (format: postgresql://user:pass@host:port/db)
     import urllib.parse as urlparse
     url = urlparse.urlparse(DATABASE_URL)
     DB_CONFIG = {
@@ -28,13 +27,13 @@ if DATABASE_URL:
         'password': url.password
     }
 else:
-    # Configuration manuelle ou locale
+    # Fallback pour développement local
     DB_CONFIG = {
-        'host': os.getenv('PGHOST', 'localhost'),
-        'port': os.getenv('PGPORT', '5432'),
-        'database': os.getenv('PGDATABASE', 'railway'),
-        'user': os.getenv('PGUSER', 'postgres'),
-        'password': os.getenv('PGPASSWORD', '')
+        'host': 'localhost',
+        'port': '5432',
+        'database': 'demarches',
+        'user': 'postgres',
+        'password': 'password'
     }
 
 def get_connection():

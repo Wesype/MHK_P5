@@ -1,5 +1,4 @@
-crawl4ai==0.3.6
-numpy>=1.26.0,<2.1.1
+crawl4ai
 playwright>=1.40.0
 requests>=2.31.0
 beautifulsoup4>=4.12.0
