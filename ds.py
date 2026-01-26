@@ -8,9 +8,19 @@ import re
 
 async def login_and_scrape_all():
     # Configuration du proxy français Bright Data
-    proxy_server = os.getenv('PROXY_SERVER', 'brd.superproxy.io:33335')
-    proxy_username = os.getenv('PROXY_USERNAME', 'brd-customer-hl_7b254e46-zone-mhkprojet5')
-    proxy_password = os.getenv('PROXY_PASSWORD', 'b951ez7og4bb')
+    proxy_server = os.getenv('PROXY_SERVER')
+    proxy_username = os.getenv('PROXY_USERNAME')
+    proxy_password = os.getenv('PROXY_PASSWORD')
+    
+    # Construire la config du proxy si les variables sont définies
+    proxy_config = None
+    if proxy_server and proxy_username and proxy_password:
+        proxy_config = {
+            'server': f"http://{proxy_server}",
+            'username': proxy_username,
+            'password': proxy_password
+        }
+        print(f"🌍 Utilisation du proxy français: {proxy_server}")
     
     browser_config = BrowserConfig(
         headless=True,  # Mode headless pour Docker/Railway
@@ -23,7 +33,7 @@ async def login_and_scrape_all():
             '--lang=fr-FR'  # Langue française
         ],
         user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        proxy=f"http://{proxy_username}:{proxy_password}@{proxy_server}"
+        proxy_config=proxy_config
     )
     
     all_dossiers = []
