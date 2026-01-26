@@ -73,9 +73,12 @@ async def login_and_scrape_all():
             url = f"https://demarche.numerique.gouv.fr/dossiers?page=1&statut={statut}"
             
             config = CrawlerRunConfig(
-                delay_before_return_html=1.0,
+                delay_before_return_html=2.0,
                 page_timeout=30000,
-                session_id=session_id  # Utiliser la même session que la connexion
+                session_id=session_id,  # Utiliser la même session que la connexion
+                override_navigator=True,
+                simulate_user=True,
+                magic=True
             )
             
             result = await crawler.arun(url=url, config=config)
@@ -123,9 +126,12 @@ async def login_and_scrape_all():
         print()
         
         page_config = CrawlerRunConfig(
-            delay_before_return_html=1.0,  # Réduit à 1 seconde
+            delay_before_return_html=2.0,  # Augmenté pour laisser le temps au JS
             page_timeout=30000,
-            session_id="demarches_session"
+            session_id="demarches_session",
+            override_navigator=True,  # Masquer les traces d'automatisation
+            simulate_user=True,  # Simuler un comportement utilisateur
+            magic=True  # Activer toutes les options anti-détection
         )
         
         # Boucle sur chaque statut
