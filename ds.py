@@ -8,7 +8,16 @@ import re
 async def login_and_scrape_all():
     browser_config = BrowserConfig(
         headless=True,  # Mode headless pour Docker/Railway
-        verbose=False
+        verbose=False,
+        extra_args=[
+            '--disable-blink-features=AutomationControlled',
+            '--disable-dev-shm-usage',
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-web-security',
+            '--disable-features=IsolateOrigins,site-per-process'
+        ],
+        user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     )
     
     all_dossiers = []
@@ -19,6 +28,13 @@ async def login_and_scrape_all():
         
         login_config = CrawlerRunConfig(
             js_code=[
+                # Masquer les traces d'automatisation
+                """
+                Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
+                Object.defineProperty(navigator, 'plugins', {get: () => [1, 2, 3, 4, 5]});
+                Object.defineProperty(navigator, 'languages', {get: () => ['fr-FR', 'fr', 'en-US', 'en']});
+                """,
+                "await new Promise(r => setTimeout(r, 500));",
                 """
                 document.querySelector('#user_email').value = 'administration.etrangers@mhk-avocats.com';
                 document.querySelector('#user_password').value = 'MHKavocats-christiani2025@';
