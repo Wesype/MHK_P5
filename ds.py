@@ -52,14 +52,14 @@ async def login_and_scrape_all():
             {'nom': 'corbeille', 'statut': 'dossiers-supprimes'}
         ]
         
-        async def get_max_pages(crawler, statut, session_id="demarches_session"):
+        async def get_max_pages(crawler, statut, session_id):
             """Détecte automatiquement le nombre de pages pour un statut donné"""
             url = f"https://demarche.numerique.gouv.fr/dossiers?page=1&statut={statut}"
             
             config = CrawlerRunConfig(
                 delay_before_return_html=1.0,
                 page_timeout=30000,
-                session_id=session_id
+                session_id=session_id  # Utiliser la même session que la connexion
             )
             
             result = await crawler.arun(url=url, config=config)
@@ -100,7 +100,7 @@ async def login_and_scrape_all():
         print("🔍 Détection automatique du nombre de pages...\n")
         
         for statut_info in statuts_config:
-            max_pages = await get_max_pages(crawler, statut_info['statut'])
+            max_pages = await get_max_pages(crawler, statut_info['statut'], "demarches_session")
             statut_info['pages'] = max_pages
             print(f"   📊 {statut_info['nom']}: {max_pages} pages")
         
