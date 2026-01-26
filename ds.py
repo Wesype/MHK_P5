@@ -88,26 +88,30 @@ async def login_and_scrape_all():
             """Détecte automatiquement le nombre de pages pour un statut donné"""
             url = f"https://demarche.numerique.gouv.fr/dossiers?page=1&statut={statut}"
             
-            config = CrawlerRunConfig(
-                delay_before_return_html=2.0,
-                page_timeout=30000,
-                session_id=session_id,  # Utiliser la même session que la connexion
-                override_navigator=True,
-                simulate_user=True,
-                magic=True,
-                headers={
-                    "Accept-Language": "fr-FR,fr;q=0.9",
-                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
-                }
-            )
-            
-            result = await crawler.arun(url=url, config=config)
-            
-            if not result.success:
-                print(f"⚠️  Impossible de détecter le nombre de pages pour {statut}, utilisation de 1 par défaut")
+            try:
+                config = CrawlerRunConfig(
+                    delay_before_return_html=2.0,
+                    page_timeout=30000,
+                    session_id=session_id,  # Utiliser la même session que la connexion
+                    override_navigator=True,
+                    simulate_user=True,
+                    magic=True,
+                    headers={
+                        "Accept-Language": "fr-FR,fr;q=0.9",
+                        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
+                    }
+                )
+                
+                result = await crawler.arun(url=url, config=config)
+                
+                if not result.success:
+                    print(f"⚠️  Impossible de détecter le nombre de pages pour {statut}, utilisation de 1 par défaut")
+                    return 1
+                
+                soup = BeautifulSoup(result.html, 'html.parser')
+            except Exception as e:
+                print(f"❌ Erreur lors de la détection des pages pour {statut}: {e}")
                 return 1
-            
-            soup = BeautifulSoup(result.html, 'html.parser')
             
             # Chercher le lien "Dernier" qui contient le numéro de la dernière page
             last_link = soup.find('a', class_='fr-pagination__link--last')
