@@ -3,10 +3,11 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import json
 import os
+import asyncio
 from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
-from download_pdfs import scrape_demarches
+from ds import login_and_scrape_all
 from send_webhook import send_to_webhook
 
 # Charger les variables d'environnement
@@ -247,7 +248,7 @@ def export_to_csv():
     else:
         print("❌ Aucun dossier complet trouvé")
 
-def main():
+async def main():
     """Fonction principale"""
     print("\n" + "="*60)
     print("🚀 Démarrage du scraping avec PostgreSQL")
@@ -256,9 +257,9 @@ def main():
     # Initialiser la base de données
     init_database()
     
-    # Scraper les données
+    # Scraper les données (fonction async)
     print("\n📊 Scraping en cours...")
-    dossiers = scrape_demarches()
+    dossiers = await login_and_scrape_all()
     
     if dossiers:
         print(f"\n✅ {len(dossiers)} dossiers récupérés")
@@ -289,13 +290,11 @@ def main():
             print(f"🔔 {len(changements)} changement(s) détecté(s)")
             print("="*60)
             
-            # Optionnel: envoyer au webhook
-            send_webhook = input("\n💬 Envoyer les changements au webhook ? (o/n): ").lower() == 'o'
-            if send_webhook:
-                from send_webhook import send_changements_to_webhook
-                send_changements_to_webhook()
+            # Envoyer automatiquement au webhook
+            from send_webhook import send_changements_to_webhook
+            send_changements_to_webhook()
     else:
         print("❌ Aucun dossier trouvé")
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
