@@ -7,8 +7,8 @@ import re
 
 async def login_and_scrape_all():
     browser_config = BrowserConfig(
-        headless=False,  # Mettre True pour aller plus vite une fois validé
-        verbose=True
+        headless=True,  # Mode headless pour Docker/Railway
+        verbose=False
     )
     
     all_dossiers = []
@@ -254,5 +254,6 @@ async def login_and_scrape_all():
         
         return all_dossiers
 
-# Exécuter
-dossiers = asyncio.run(login_and_scrape_all())
+if __name__ == "__main__":
+    # Exécuter seulement si appelé directement
+    dossiers = asyncio.run(login_and_scrape_all())

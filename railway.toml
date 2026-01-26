@@ -1,0 +1,15 @@
+# Configuration Railway pour Cron Job
+# Le script s'exécute une fois puis se termine
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "python db_postgres.py"
+restartPolicyType = "NEVER"  # Ne pas redémarrer automatiquement
+
+# Pour configurer le cron sur Railway:
+# 1. Allez dans Settings > Cron
+# 2. Ajoutez un schedule (ex: "0 */12 * * *" pour toutes les 12h)
+# 3. Railway redémarrera le service automatiquement selon le cron

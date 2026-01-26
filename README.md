@@ -8,7 +8,8 @@
    - Créer un nouveau projet
    - Déployer depuis GitHub
    - Ajouter un service PostgreSQL (Railway injecte automatiquement les variables)
-   - C'est tout ! Railway utilise le `Dockerfile` et `railway.json`
+   - Configurer le Cron Job dans Settings (ex: `0 */12 * * *` pour toutes les 12h)
+   - C'est tout ! Railway utilise le `Dockerfile` et `railway.toml`
 
 ### Variables d'environnement sur Railway
 
@@ -16,7 +17,16 @@
 1. `DATABASE_URL` = `${{Postgres.DATABASE_URL}}` (référence au service PostgreSQL)
 2. `WEBHOOK_URL` = URL de votre webhook n8n
 
-C'est tout ! Railway gère automatiquement la connexion entre les services.
+### Configuration du Cron Job
+
+Le script s'exécute une fois puis se termine. Pour l'exécuter périodiquement :
+
+1. Allez dans **Settings > Cron** de votre service Railway
+2. Activez le Cron et définissez le schedule :
+   - `0 */12 * * *` - Toutes les 12 heures
+   - `0 0 * * *` - Tous les jours à minuit
+   - `0 */6 * * *` - Toutes les 6 heures
+3. Railway redémarrera automatiquement le service selon le cron
 
 ### Test en local avec Docker
 

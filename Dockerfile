@@ -24,5 +24,6 @@ RUN mkdir -p downloads
 # Exposer le port si nécessaire (pour une future API)
 EXPOSE 8000
 
-# Commande par défaut
+# Commande par défaut - s'exécute une fois puis se termine
+# Utilisez un cron job Railway pour l'exécuter périodiquement
 CMD ["python", "db_postgres.py"]
