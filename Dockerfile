@@ -1,5 +1,5 @@
-# Utiliser l'image officielle Playwright qui inclut Python et tous les navigateurs
-FROM mcr.microsoft.com/playwright/python:v1.40.0-focal
+# Utiliser l'image officielle Playwright avec Python 3.12 (Ubuntu 24.04)
+FROM mcr.microsoft.com/playwright/python:v1.57.0-noble
 
 # Définir le répertoire de travail
 WORKDIR /app
