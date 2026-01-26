@@ -25,4 +25,4 @@ RUN mkdir -p downloads
 EXPOSE 8000
 
 # Commande par défaut
-CMD ["python", "db_simple.py"]
+CMD ["python", "db_postgres.py"]
