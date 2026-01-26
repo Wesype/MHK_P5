@@ -92,14 +92,7 @@ async def login_and_scrape_all():
                 config = CrawlerRunConfig(
                     delay_before_return_html=2.0,
                     page_timeout=30000,
-                    session_id=session_id,  # Utiliser la même session que la connexion
-                    override_navigator=True,
-                    simulate_user=True,
-                    magic=True,
-                    headers={
-                        "Accept-Language": "fr-FR,fr;q=0.9",
-                        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
-                    }
+                    session_id=session_id
                 )
                 
                 result = await crawler.arun(url=url, config=config)
@@ -150,16 +143,9 @@ async def login_and_scrape_all():
         print()
         
         page_config = CrawlerRunConfig(
-            delay_before_return_html=2.0,  # Augmenté pour laisser le temps au JS
+            delay_before_return_html=2.0,
             page_timeout=30000,
-            session_id="demarches_session",
-            override_navigator=True,  # Masquer les traces d'automatisation
-            simulate_user=True,  # Simuler un comportement utilisateur
-            magic=True,  # Activer toutes les options anti-détection
-            headers={
-                "Accept-Language": "fr-FR,fr;q=0.9",
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
-            }
+            session_id="demarches_session"
         )
         
         # Boucle sur chaque statut
