@@ -1,0 +1,35 @@
+# Ce fichier est pour le développement LOCAL uniquement
+# Sur Railway, utilisez simplement le Dockerfile + service PostgreSQL
+
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: demarches_scraper
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/demarches
+      - WEBHOOK_URL=${WEBHOOK_URL:-https://n8n.wesype.com/webhook-test/ce676bb0-4b87-4ce9-b93f-7fc97f589c07}
+    volumes:
+      - ./downloads:/app/downloads
+      - ./changements.json:/app/changements.json
+      - ./dossiers_complets.csv:/app/dossiers_complets.csv
+    depends_on:
+      - db
+    restart: unless-stopped
+    command: python db_postgres.py
+
+  db:
+    image: postgres:15-alpine
+    container_name: postgres_local
+    environment:
+      - POSTGRES_DB=demarches
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

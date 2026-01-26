@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Local files
+*.db
+*.sqlite
+*.sqlite3
+.env
+changements.json
+dossiers_complets.csv
+dossiers_complets.json
+rapport_telechargements.json
+doublons_rapport.json
+
+# Downloads (will be mounted as volume)
+downloads/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

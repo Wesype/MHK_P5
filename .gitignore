@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Local database
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment variables
+.env
+
+# Downloads folder
+downloads/
+
+# Generated files
+changements.json
+dossiers_complets.csv
+dossiers_complets.json
+rapport_telechargements.json
+doublons_rapport.json
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
