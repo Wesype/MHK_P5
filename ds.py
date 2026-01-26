@@ -18,8 +18,7 @@ async def login_and_scrape_all():
             '--disable-features=IsolateOrigins,site-per-process',
             '--lang=fr-FR'  # Langue française
         ],
-        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",  # User-agent Windows français
-        accept_language="fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7"  # Headers de langue
+        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"  # User-agent Windows français
     )
     
     all_dossiers = []
