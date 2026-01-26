@@ -27,15 +27,29 @@ if DATABASE_URL:
         'user': url.username,
         'password': url.password
     }
+    print(f"✅ Connexion PostgreSQL via DATABASE_URL: {url.hostname}:{url.port}/{url.path[1:]}")
 else:
-    # Fallback pour développement local
-    DB_CONFIG = {
-        'host': 'localhost',
-        'port': '5432',
-        'database': 'demarches',
-        'user': 'postgres',
-        'password': 'password'
-    }
+    # Essayer les variables PG* de Railway
+    pghost = os.getenv('PGHOST')
+    if pghost:
+        DB_CONFIG = {
+            'host': pghost,
+            'port': os.getenv('PGPORT', '5432'),
+            'database': os.getenv('PGDATABASE', 'railway'),
+            'user': os.getenv('PGUSER', 'postgres'),
+            'password': os.getenv('PGPASSWORD', '')
+        }
+        print(f"✅ Connexion PostgreSQL via variables PG*: {pghost}:{DB_CONFIG['port']}/{DB_CONFIG['database']}")
+    else:
+        # Fallback pour développement local
+        DB_CONFIG = {
+            'host': 'localhost',
+            'port': '5432',
+            'database': 'demarches',
+            'user': 'postgres',
+            'password': 'password'
+        }
+        print("⚠️  Aucune variable PostgreSQL trouvée, utilisation de localhost")
 
 def get_connection():
     """Créer une connexion à PostgreSQL"""
