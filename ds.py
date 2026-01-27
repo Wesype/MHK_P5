@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import re
 from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig
 from bs4 import BeautifulSoup
 from db_simple import DossiersManager
