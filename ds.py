@@ -292,50 +292,8 @@ async def login_and_scrape_all():
                 writer.writeheader()
                 writer.writerows(all_dossiers)
         
-        print(f"\n TERMINÉ!")
+        print(f"\n✅ Scraping terminé!")
         print(f"   {len(all_dossiers)} dossiers extraits")
-        print(f"   dossiers_complets.json")
-        print(f"   dossiers_complets.csv")
-        
-        # ÉTAPE 4 : Comparer avec PostgreSQL et détecter les changements
-        try:
-            db = DossiersManager()
-            db.connect()
-            
-            # Séparer les dossiers expirants des autres
-            expirants = [d for d in all_dossiers if d['categorie'] == 'expirants']
-            autres_dossiers = [d for d in all_dossiers if d['categorie'] != 'expirants']
-            
-            print(f"\n📊 Répartition:")
-            print(f"   Dossiers normaux: {len(autres_dossiers)}")
-            print(f"   Dossiers expirants (tracking séparé): {len(expirants)}")
-            
-            # Processus complet: créer table temp, comparer, remplacer
-            changements = db.process_scraping(autres_dossiers, expirants)
-            
-            db.disconnect()
-            
-            # ÉTAPE 5 : Si des changements détectés, télécharger les PDFs et envoyer au webhook
-            if changements:
-                print(f"\n✨ {len(changements)} changements détectés")
-                print(f"📥 Lancement du téléchargement des PDFs et envoi au webhook...\n")
-                
-                # Importer et exécuter le téléchargement
-                from download_pdfs import download_changed_dossiers
-                await download_changed_dossiers()
-            
-        except Exception as e:
-            print(f"\n ⚠️  Erreur PostgreSQL: {e}")
-            print("   Les données sont sauvegardées dans les fichiers JSON/CSV")
-        
-        # Stats
-        statuts = {}
-        for d in all_dossiers:
-            statuts[d['statut']] = statuts.get(d['statut'], 0) + 1
-        
-        print(f"\n Répartition par statut:")
-        for statut, count in statuts.items():
-            print(f"   - {statut}: {count}")
         
         return all_dossiers
 

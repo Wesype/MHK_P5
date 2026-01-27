@@ -246,7 +246,6 @@ def export_to_csv():
     cur.execute("""
         SELECT numero, statut, categorie, date_depot, date_derniere_modification
         FROM dossiers
-        WHERE categorie = 'complet'
         ORDER BY numero
     """)
     
@@ -304,7 +303,13 @@ async def main():
             print(f"🔔 {len(changements)} changement(s) détecté(s)")
             print("="*60)
             
+            # Télécharger les PDFs des dossiers modifiés
+            print("\n📥 Téléchargement des PDFs des dossiers modifiés...")
+            from download_pdfs import download_changed_dossiers
+            await download_changed_dossiers()
+            
             # Envoyer automatiquement au webhook
+            print("\n📤 Envoi au webhook...")
             from send_webhook import send_changements_to_webhook
             send_changements_to_webhook()
     else:
