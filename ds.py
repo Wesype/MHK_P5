@@ -6,10 +6,6 @@ from bs4 import BeautifulSoup
 from db_simple import DossiersManager
 
 async def login_and_scrape_all():
-    # Utiliser un user_data_dir pour persister les cookies
-    import tempfile
-    user_data_dir = tempfile.mkdtemp(prefix="playwright_")
-    
     browser_config = BrowserConfig(
         headless=True,
         verbose=False
