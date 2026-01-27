@@ -2,12 +2,13 @@
 # Le script s'exécute une fois puis se termine
 
 [build]
-builder = "DOCKERFILE"
-dockerfilePath = "Dockerfile"
+builder = "NIXPACKS"
+nixpacksConfigPath = "nixpacks.toml"
 
 [deploy]
 startCommand = "python db_postgres.py"
-restartPolicyType = "NEVER"  # Ne pas redémarrer automatiquement
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
 
 # Pour configurer le cron sur Railway:
 # 1. Allez dans Settings > Cron

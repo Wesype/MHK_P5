@@ -10,13 +10,16 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:password@db:5432/demarches
       - WEBHOOK_URL=${WEBHOOK_URL:-https://n8n.wesype.com/webhook-test/ce676bb0-4b87-4ce9-b93f-7fc97f589c07}
+      - PROXY_SERVER=${PROXY_SERVER}
+      - PROXY_USERNAME=${PROXY_USERNAME}
+      - PROXY_PASSWORD=${PROXY_PASSWORD}
     volumes:
       - ./downloads:/app/downloads
       - ./changements.json:/app/changements.json
       - ./dossiers_complets.csv:/app/dossiers_complets.csv
     depends_on:
       - db
-    restart: unless-stopped
+    restart: "no"
     command: python db_postgres.py
 
   db:

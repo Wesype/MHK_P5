@@ -7,31 +7,14 @@ from db_simple import DossiersManager
 import re
 
 async def login_and_scrape_all():
-    # Configuration du proxy français Bright Data - Paris
-    proxy_server = os.getenv('PROXY_SERVER', 'brd.superproxy.io:33335')
-    proxy_username = os.getenv('PROXY_USERNAME', 'brd-customer-hl_7b254e46-zone-mhkprojet5-country-fr-city-paris')
-    proxy_password = os.getenv('PROXY_PASSWORD', 'b951ez7og4bb')
-    
-    # Construire la config du proxy
-    proxy_config = {
-        'server': f"http://{proxy_server}",
-        'username': proxy_username,
-        'password': proxy_password
-    }
-    print(f"🌍 Utilisation du proxy Paris, France: {proxy_server}")
+    # Utiliser un user_data_dir pour persister les cookies
+    import tempfile
+    user_data_dir = tempfile.mkdtemp(prefix="playwright_")
     
     browser_config = BrowserConfig(
-        headless=True,  # Mode headless pour Docker/Railway
+        headless=True,  # Mode headless pour Docker
         verbose=False,
-        extra_args=[
-            '--disable-blink-features=AutomationControlled',
-            '--disable-dev-shm-usage',
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--lang=fr-FR'  # Langue française
-        ],
-        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        proxy_config=proxy_config
+        user_data_dir=user_data_dir  # Persister les cookies
     )
     
     all_dossiers = []

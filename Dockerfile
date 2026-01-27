@@ -1,29 +1,31 @@
-# Utiliser l'image officielle Playwright avec Python 3.12 (Ubuntu 24.04)
-FROM mcr.microsoft.com/playwright/python:v1.57.0-noble
+# Utiliser l'image officielle Playwright avec Python
+FROM mcr.microsoft.com/playwright/python:v1.48.0-noble
 
 # Définir le répertoire de travail
 WORKDIR /app
 
-# Copier le fichier requirements
+# Copier les fichiers de dépendances
 COPY requirements.txt .
 
-# Installer les dépendances Python
-RUN pip install --upgrade pip && \
-    pip install -r requirements.txt
+# Installer les dépendances Python (crawl4ai installera la version de Playwright dont il a besoin)
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Installer les navigateurs Playwright (déjà inclus dans l'image mais au cas où)
-RUN playwright install chromium && \
-    playwright install-deps chromium
+# Installer les navigateurs Playwright pour la version installée par crawl4ai
+RUN playwright install chromium
+RUN playwright install-deps chromium
 
-# Copier le reste du code
+# Copier le code source
 COPY . .
 
-# Créer le dossier downloads s'il n'existe pas
+# Créer les dossiers nécessaires
 RUN mkdir -p downloads
 
-# Exposer le port si nécessaire (pour une future API)
-EXPOSE 8000
+# Configuration recommandée pour Playwright
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
-# Commande par défaut - s'exécute une fois puis se termine
-# Utilisez un cron job Railway pour l'exécuter périodiquement
+# Désactiver le mode headless pour éviter les problèmes de sandbox
+# Railway utilise --ipc=host automatiquement
+ENV PLAYWRIGHT_CHROMIUM_ARGS="--no-sandbox --disable-setuid-sandbox"
+
+# Commande par défaut
 CMD ["python", "db_postgres.py"]

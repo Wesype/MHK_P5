@@ -1,0 +1,12 @@
+Dockerfile
+docker-compose.yml
+.dockerignore
+venv/
+__pycache__/
+*.pyc
+.env
+.git/
+downloads/
+*.json
+*.csv
+setup_cron.sh
