@@ -17,17 +17,13 @@ async def login_and_scrape_all():
     proxy_password = os.getenv('PROXY_PASSWORD')
     
     if proxy_server and proxy_username and proxy_password:
-        proxy_config = {
-            "server": f"http://{proxy_server}",
-            "username": proxy_username,
-            "password": proxy_password
-        }
+        proxy_config = f"http://{proxy_username}:{proxy_password}@{proxy_server}"
         print(f"🌐 Utilisation du proxy: {proxy_server}")
     
     browser_config = BrowserConfig(
         headless=True,
         verbose=False,
-        proxy=proxy_config
+        proxy_config=proxy_config
     )
     
     all_dossiers = []
