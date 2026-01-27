@@ -13,9 +13,9 @@ async def login_and_scrape_all():
     # Connexion directe sans proxy
     print(f"🌐 Connexion directe (sans proxy)")
     
-    # Forcer headless=False même dans Docker (Xvfb fournit un DISPLAY)
+    # Mode headless activé (plus léger et rapide)
     browser_config = BrowserConfig(
-        headless=False,  # Toujours False, Xvfb gère l'affichage dans Docker
+        headless=True,
         verbose=False,
         extra_args=[
             "--disable-blink-features=AutomationControlled",
@@ -41,17 +41,17 @@ async def login_and_scrape_all():
                 Object.defineProperty(navigator, 'platform', {get: () => 'Linux x86_64'});
                 delete navigator.__proto__.webdriver;
                 """,
-                "await new Promise(r => setTimeout(r, 500));",
+                "await new Promise(r => setTimeout(r, 300));",
                 """
                 document.querySelector('#user_email').value = 'administration.etrangers@mhk-avocats.com';
                 document.querySelector('#user_password').value = 'MHKavocats-christiani2025@';
                 """,
-                "await new Promise(r => setTimeout(r, 500));",
+                "await new Promise(r => setTimeout(r, 300));",
                 "document.querySelector('input[type=\"submit\"][value=\"Se connecter\"]').click();",
-                "await new Promise(r => setTimeout(r, 8000));"  # Attendre plus longtemps la redirection
+                "await new Promise(r => setTimeout(r, 4000));"  # Attendre la redirection
             ],
-            delay_before_return_html=3.0,  # Augmenté à 3s
-            page_timeout=60000,  # 60 secondes max
+            delay_before_return_html=1.5,  # Réduit à 1.5s
+            page_timeout=30000,  # 30 secondes
             session_id="demarches_session"  # Maintenir la session
         )
         
@@ -74,13 +74,13 @@ async def login_and_scrape_all():
             print("Le site a rejeté la connexion (détection d'automatisation)")
             return
         
-        # Attendre encore un peu pour stabiliser la session
-        await asyncio.sleep(3)
+        # Attendre un peu pour stabiliser la session
+        await asyncio.sleep(1.5)
         
         # Test de la session : essayer d'accéder à une page protégée
         test_config = CrawlerRunConfig(
-            delay_before_return_html=2.0,
-            page_timeout=30000,
+            delay_before_return_html=1.0,
+            page_timeout=20000,
             session_id="demarches_session"
         )
         test_result = await crawler.arun(
@@ -110,12 +110,12 @@ async def login_and_scrape_all():
             
             try:
                 config = CrawlerRunConfig(
-                    delay_before_return_html=5.0,  # Augmenté à 5s pour laisser le temps à la pagination de charger
-                    page_timeout=30000,
+                    delay_before_return_html=2.0,  # Réduit à 2s
+                    page_timeout=20000,
                     session_id=session_id,
                     js_code=[
                         # Attendre que la pagination soit chargée
-                        "await new Promise(r => setTimeout(r, 2000));",
+                        "await new Promise(r => setTimeout(r, 1000));",
                     ]
                 )
                 
@@ -180,8 +180,8 @@ async def login_and_scrape_all():
         print()
         
         page_config = CrawlerRunConfig(
-            delay_before_return_html=2.0,
-            page_timeout=30000,
+            delay_before_return_html=1.0,  # Réduit à 1s pour scraping plus rapide
+            page_timeout=20000,
             session_id="demarches_session"
         )
         
