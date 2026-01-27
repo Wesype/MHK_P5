@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  scraper:
+    build: .
+    container_name: mhk-scraper
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - WEBHOOK_URL=${WEBHOOK_URL}
+      - IPROYAL_PROXY_SERVER=${IPROYAL_PROXY_SERVER:-}
+      - IPROYAL_PROXY_USERNAME=${IPROYAL_PROXY_USERNAME:-}
+      - IPROYAL_PROXY_PASSWORD=${IPROYAL_PROXY_PASSWORD:-}
+    volumes:
+      # Monter un volume pour les PDFs téléchargés
+      - ./pdfs:/app/pdfs
+      # Monter le répertoire actuel pour récupérer les fichiers debug
+      - ./debug:/app/debug_pagination_*.html
+      - .:/app/output
+    restart: unless-stopped
+    # Pour exécuter en mode headless sur serveur
+    shm_size: '2gb'

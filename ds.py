@@ -10,20 +10,18 @@ from dotenv import load_dotenv
 load_dotenv()
 
 async def login_and_scrape_all():
-    # Configuration du proxy résidentiel
-    proxy_config = None
-    proxy_server = os.getenv('PROXY_SERVER')
-    proxy_username = os.getenv('PROXY_USERNAME')
-    proxy_password = os.getenv('PROXY_PASSWORD')
+    # Connexion directe sans proxy
+    print(f"🌐 Connexion directe (sans proxy)")
     
-    if proxy_server and proxy_username and proxy_password:
-        proxy_config = f"http://{proxy_username}:{proxy_password}@{proxy_server}"
-        print(f"🌐 Utilisation du proxy: {proxy_server}")
-    
+    # Forcer headless=False même dans Docker (Xvfb fournit un DISPLAY)
     browser_config = BrowserConfig(
-        headless=True,
+        headless=False,  # Toujours False, Xvfb gère l'affichage dans Docker
         verbose=False,
-        proxy_config=proxy_config
+        extra_args=[
+            "--disable-blink-features=AutomationControlled",
+            "--disable-dev-shm-usage",
+            "--no-sandbox"
+        ]
     )
     
     all_dossiers = []
@@ -34,11 +32,14 @@ async def login_and_scrape_all():
         
         login_config = CrawlerRunConfig(
             js_code=[
-                # Masquer les traces d'automatisation
+                # Masquer les traces d'automatisation (renforcé pour headless)
                 """
                 Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
                 Object.defineProperty(navigator, 'plugins', {get: () => [1, 2, 3, 4, 5]});
                 Object.defineProperty(navigator, 'languages', {get: () => ['fr-FR', 'fr', 'en-US', 'en']});
+                Object.defineProperty(navigator, 'maxTouchPoints', {get: () => 1});
+                Object.defineProperty(navigator, 'platform', {get: () => 'Linux x86_64'});
+                delete navigator.__proto__.webdriver;
                 """,
                 "await new Promise(r => setTimeout(r, 500));",
                 """
@@ -47,10 +48,10 @@ async def login_and_scrape_all():
                 """,
                 "await new Promise(r => setTimeout(r, 500));",
                 "document.querySelector('input[type=\"submit\"][value=\"Se connecter\"]').click();",
-                "await new Promise(r => setTimeout(r, 5000));"  # Attendre la redirection
+                "await new Promise(r => setTimeout(r, 8000));"  # Attendre plus longtemps la redirection
             ],
-            delay_before_return_html=2.0,
-            page_timeout=30000,  # 30 secondes max
+            delay_before_return_html=3.0,  # Augmenté à 3s
+            page_timeout=60000,  # 60 secondes max
             session_id="demarches_session"  # Maintenir la session
         )
         
@@ -63,7 +64,36 @@ async def login_and_scrape_all():
             print(" Échec de la connexion")
             return
         
-        print("✅ Connexion effectuée!\n")
+        # Vérifier qu'on est bien connecté
+        print(f"✅ Connexion effectuée!")
+        print(f"🔍 Vérification de la session...")
+        
+        # Vérifier qu'on n'est pas sur la page de login
+        if "Sign in" in result.html and "/users/sign_in" in result.html:
+            print("❌ ERREUR: Toujours sur la page de login!")
+            print("Le site a rejeté la connexion (détection d'automatisation)")
+            return
+        
+        # Attendre encore un peu pour stabiliser la session
+        await asyncio.sleep(3)
+        
+        # Test de la session : essayer d'accéder à une page protégée
+        test_config = CrawlerRunConfig(
+            delay_before_return_html=2.0,
+            page_timeout=30000,
+            session_id="demarches_session"
+        )
+        test_result = await crawler.arun(
+            url="https://demarche.numerique.gouv.fr/dossiers?statut=en-cours",
+            config=test_config
+        )
+        
+        if "Sign in" in test_result.html:
+            print("❌ ERREUR: Session non maintenue - redirection vers login")
+            print("Le site détecte l'automatisation et invalide la session")
+            return
+        
+        print("✅ Session valide et maintenue\n")
         
         # ÉTAPE 2 : Définir tous les statuts à scraper
         statuts_config = [
@@ -80,9 +110,13 @@ async def login_and_scrape_all():
             
             try:
                 config = CrawlerRunConfig(
-                    delay_before_return_html=2.0,
+                    delay_before_return_html=5.0,  # Augmenté à 5s pour laisser le temps à la pagination de charger
                     page_timeout=30000,
-                    session_id=session_id
+                    session_id=session_id,
+                    js_code=[
+                        # Attendre que la pagination soit chargée
+                        "await new Promise(r => setTimeout(r, 2000));",
+                    ]
                 )
                 
                 result = await crawler.arun(url=url, config=config)
@@ -118,6 +152,19 @@ async def login_and_scrape_all():
             
             if page_numbers:
                 return max(page_numbers)
+            
+            # Debug: afficher et sauvegarder le HTML si aucune pagination trouvée
+            print(f"⚠️  Aucune pagination trouvée pour {statut}")
+            print(f"📄 HTML retourné (premiers 2000 caractères):")
+            print("="*80)
+            print(result.html[:2000])
+            print("="*80)
+            
+            # Sauvegarder aussi dans un fichier
+            debug_file = f'debug_pagination_{statut}.html'
+            with open(debug_file, 'w', encoding='utf-8') as f:
+                f.write(result.html)
+            print(f"💾 HTML complet sauvegardé dans: {debug_file}")
             
             # Par défaut, retourner 1
             return 1

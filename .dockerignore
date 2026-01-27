@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+
+# Git
+.git/
+.gitignore
+
+# Environment
+.env
+
+# Logs et debug
+*.log
+debug_*.html
+
+# Données temporaires
+dossiers_complets.json
+dossiers_complets.csv
+*.pdf
+
+# OS
+.DS_Store
+Thumbs.db
