@@ -4,7 +4,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "playwright install chromium && playwright install-deps chromium && python db_postgres.py",
+    "startCommand": "/app/.venv/bin/playwright install chromium && /app/.venv/bin/playwright install-deps chromium && /app/.venv/bin/python db_postgres.py",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }
