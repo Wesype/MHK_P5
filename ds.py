@@ -5,11 +5,29 @@ import re
 from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig
 from bs4 import BeautifulSoup
 from db_simple import DossiersManager
+from dotenv import load_dotenv
+
+load_dotenv()
 
 async def login_and_scrape_all():
+    # Configuration du proxy résidentiel
+    proxy_config = None
+    proxy_server = os.getenv('PROXY_SERVER')
+    proxy_username = os.getenv('PROXY_USERNAME')
+    proxy_password = os.getenv('PROXY_PASSWORD')
+    
+    if proxy_server and proxy_username and proxy_password:
+        proxy_config = {
+            "server": f"http://{proxy_server}",
+            "username": proxy_username,
+            "password": proxy_password
+        }
+        print(f"🌐 Utilisation du proxy: {proxy_server}")
+    
     browser_config = BrowserConfig(
         headless=True,
-        verbose=False
+        verbose=False,
+        proxy=proxy_config
     )
     
     all_dossiers = []
