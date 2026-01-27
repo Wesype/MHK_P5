@@ -4,7 +4,6 @@ import os
 from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig
 from bs4 import BeautifulSoup
 from db_simple import DossiersManager
-import re
 
 async def login_and_scrape_all():
     # Utiliser un user_data_dir pour persister les cookies
@@ -12,9 +11,8 @@ async def login_and_scrape_all():
     user_data_dir = tempfile.mkdtemp(prefix="playwright_")
     
     browser_config = BrowserConfig(
-        headless=True,  # Mode headless pour Docker
-        verbose=False,
-        user_data_dir=user_data_dir  # Persister les cookies
+        headless=True,
+        verbose=False
     )
     
     all_dossiers = []

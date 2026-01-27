@@ -4,7 +4,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "python db_postgres.py",
+    "startCommand": "bash railway.sh && python db_postgres.py",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }
