@@ -2,8 +2,11 @@ import requests
 import json
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
-WEBHOOK_URL = "https://n8n.wesype.com/webhook-test/ce676bb0-4b87-4ce9-b93f-7fc97f589c07"
+load_dotenv()
+
+WEBHOOK_URL = os.getenv('WEBHOOK_URL', 'https://n8n.wesype.com/webhook/f353c509-438a-4c19-a685-9d244b740250')
 
 def send_to_webhook(dossier_info, pdf_files):
     """
