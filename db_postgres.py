@@ -297,21 +297,16 @@ async def main():
         print("\n" + "="*60)
         export_to_csv()
         
-        # Envoyer au webhook si des changements
+        # Télécharger PDFs et envoyer au webhook si des changements
         if changements:
             print("\n" + "="*60)
             print(f"🔔 {len(changements)} changement(s) détecté(s)")
             print("="*60)
             
-            # Télécharger les PDFs des dossiers modifiés
-            print("\n📥 Téléchargement des PDFs des dossiers modifiés...")
+            # Télécharger les PDFs et envoyer au webhook (tout en un)
+            print("\n📥 Téléchargement des PDFs et envoi au webhook...")
             from download_pdfs import download_changed_dossiers
             await download_changed_dossiers()
-            
-            # Envoyer automatiquement au webhook
-            print("\n📤 Envoi au webhook...")
-            from send_webhook import send_changements_to_webhook
-            send_changements_to_webhook()
     else:
         print("❌ Aucun dossier trouvé")
 

@@ -8,6 +8,71 @@ load_dotenv()
 
 WEBHOOK_URL = os.getenv('WEBHOOK_URL', 'https://n8n.wesype.com/webhook/f353c509-438a-4c19-a685-9d244b740250')
 
+def send_batch_to_webhook(dossiers_batch):
+    """
+    Envoie un batch de dossiers avec leurs PDFs au webhook en un seul appel
+    
+    Args:
+        dossiers_batch: Liste de dict avec 'info' (dict) et 'pdf_files' (list)
+    
+    Returns:
+        Response object ou None en cas d'erreur
+    """
+    try:
+        files = []
+        dossiers_data = []
+        
+        # Préparer tous les fichiers et infos
+        for dossier in dossiers_batch:
+            info = dossier['info']
+            pdf_files = dossier['pdf_files']
+            
+            # Ajouter les PDFs avec préfixe du numéro de dossier
+            for pdf_path in pdf_files:
+                if os.path.exists(pdf_path):
+                    file_name = f"{info['numero']}_{os.path.basename(pdf_path)}"
+                    files.append(('files', (file_name, open(pdf_path, 'rb'), 'application/pdf')))
+            
+            # Ajouter les infos du dossier
+            dossiers_data.append({
+                'numero': info.get('numero'),
+                'type_changement': info.get('type_changement'),
+                'ancien_statut': info.get('ancien_statut', ''),
+                'nouveau_statut': info.get('nouveau_statut', ''),
+                'ancienne_categorie': info.get('ancienne_categorie', ''),
+                'nouvelle_categorie': info.get('nouvelle_categorie', ''),
+                'nb_fichiers': len(pdf_files)
+            })
+        
+        # Préparer les données
+        data = {
+            'batch_size': len(dossiers_batch),
+            'dossiers': json.dumps(dossiers_data, ensure_ascii=False),
+            'total_fichiers': len(files)
+        }
+        
+        print(f"📤 Envoi batch de {len(dossiers_batch)} dossier(s) au webhook...")
+        print(f"   📄 {len(files)} fichier(s) PDF total")
+        
+        # Envoyer la requête
+        response = requests.post(WEBHOOK_URL, data=data, files=files, timeout=60)
+        
+        # Fermer les fichiers
+        for _, file_tuple in files:
+            file_tuple[1].close()
+        
+        if response.status_code == 200:
+            print(f"✅ Batch envoyé avec succès")
+            return response
+        else:
+            print(f"⚠️  Réponse webhook: {response.status_code}")
+            print(f"   {response.text[:200]}")
+            return response
+            
+    except Exception as e:
+        print(f"❌ Erreur lors de l'envoi du batch: {e}")
+        return None
+
 def send_to_webhook(dossier_info, pdf_files):
     """
     Envoie les informations d'un dossier et ses PDFs au webhook

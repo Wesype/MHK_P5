@@ -249,8 +249,11 @@ async def download_changed_dossiers(changements_file='changements.json'):
     
     # Envoyer au webhook par batch de 10
     print(f"\n{'='*60}")
-    print(f"📤 Envoi au webhook (batch de 10)")
+    print(f"📤 Envoi au webhook (batch de 10 max)")
     print(f"{'='*60}\n")
+    
+    from send_webhook import send_batch_to_webhook
+    import shutil
     
     success_count = 0
     error_count = 0
@@ -264,42 +267,50 @@ async def download_changed_dossiers(changements_file='changements.json'):
         
         print(f"📦 Batch {batch_num}/{total_batches} ({len(batch)} dossiers)")
         
+        # Préparer le batch pour l'envoi groupé
+        dossiers_batch = []
         for changement in batch:
             numero = changement['numero']
             pdf_files = results.get(numero, [])
             
-            # Préparer les infos du dossier
-            dossier_info = {
-                'numero': numero,
-                'type_changement': changement.get('type'),
-                'ancien_statut': changement.get('ancien_statut'),
-                'nouveau_statut': changement.get('nouveau_statut'),
-                'ancienne_categorie': changement.get('ancienne_categorie'),
-                'nouvelle_categorie': changement.get('nouvelle_categorie'),
-                'nb_fichiers': len(pdf_files)
-            }
+            dossiers_batch.append({
+                'info': {
+                    'numero': numero,
+                    'type_changement': changement.get('type'),
+                    'ancien_statut': changement.get('ancien_statut'),
+                    'nouveau_statut': changement.get('nouveau_statut'),
+                    'ancienne_categorie': changement.get('ancienne_categorie'),
+                    'nouvelle_categorie': changement.get('nouvelle_categorie'),
+                    'nb_fichiers': len(pdf_files)
+                },
+                'pdf_files': pdf_files
+            })
+        
+        # Envoyer tout le batch en une seule fois
+        response = send_batch_to_webhook(dossiers_batch)
+        
+        if response and response.status_code == 200:
+            success_count += len(batch)
             
-            # Envoyer au webhook
-            response = send_to_webhook(dossier_info, pdf_files)
-            
-            if response and response.status_code == 200:
-                success_count += 1
-                
-                # Supprimer les fichiers après envoi réussi
+            # Supprimer les fichiers après envoi réussi
+            print(f"🗑️  Suppression des fichiers du batch...")
+            for changement in batch:
+                numero = changement['numero']
+                pdf_files = results.get(numero, [])
                 if pdf_files:
-                    import shutil
                     download_path = os.path.join(os.getcwd(), "downloads", numero)
                     try:
                         shutil.rmtree(download_path)
-                        print(f"   🗑️  Dossier {numero} supprimé")
+                        print(f"   ✓ Dossier {numero} supprimé")
                     except Exception as e:
                         print(f"   ⚠️  Erreur suppression {numero}: {e}")
-            else:
-                error_count += 1
+        else:
+            error_count += len(batch)
+            print(f"⚠️  Échec de l'envoi du batch - fichiers conservés")
         
         # Petit délai entre les batches
         if i + batch_size < total_changements:
-            print(f"   ⏸️  Pause de 2s avant le prochain batch...\n")
+            print(f"⏸️  Pause de 2s avant le prochain batch...\n")
             await asyncio.sleep(2)
     
     print(f"\n{'='*60}")
