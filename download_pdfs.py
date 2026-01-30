@@ -344,9 +344,47 @@ if __name__ == "__main__":
     import sys
     
     if len(sys.argv) > 1:
-        # Mode: télécharger un dossier spécifique
+        # Mode: télécharger un dossier spécifique avec statut/catégorie optionnels
+        # Usage: python download_pdfs.py <numero> [ancien_statut] [nouveau_statut] [ancienne_categorie] [nouvelle_categorie]
         numero = sys.argv[1]
-        asyncio.run(download_dossier_pdfs(numero))
+        
+        # Si des statuts ou catégories sont fournis
+        if len(sys.argv) >= 4:
+            ancien_statut = sys.argv[2] if len(sys.argv) > 2 else ''
+            nouveau_statut = sys.argv[3] if len(sys.argv) > 3 else ''
+            ancienne_categorie = sys.argv[4] if len(sys.argv) > 4 else ''
+            nouvelle_categorie = sys.argv[5] if len(sys.argv) > 5 else ''
+            
+            # Déterminer le type de changement
+            if ancien_statut and nouveau_statut and ancien_statut != nouveau_statut:
+                type_changement = 'statut_change'
+            elif ancienne_categorie and nouvelle_categorie and ancienne_categorie != nouvelle_categorie:
+                type_changement = 'categorie_change'
+            else:
+                type_changement = 'test'
+            
+            # Créer un changement de test
+            changement_test = [{
+                'numero': numero,
+                'type': type_changement,
+                'ancien_statut': ancien_statut,
+                'nouveau_statut': nouveau_statut,
+                'ancienne_categorie': ancienne_categorie,
+                'nouvelle_categorie': nouvelle_categorie
+            }]
+            
+            print(f"\n🧪 Mode TEST:")
+            print(f"   Dossier: {numero}")
+            print(f"   Type: {type_changement}")
+            if ancien_statut or nouveau_statut:
+                print(f"   Statut: {ancien_statut} → {nouveau_statut}")
+            if ancienne_categorie or nouvelle_categorie:
+                print(f"   Catégorie: {ancienne_categorie} → {nouvelle_categorie}")
+            
+            asyncio.run(download_changed_dossiers(changements_list=changement_test))
+        else:
+            # Mode simple sans statut
+            asyncio.run(download_dossier_pdfs(numero))
     else:
         # Mode: télécharger tous les dossiers avec changements
         asyncio.run(download_changed_dossiers())
