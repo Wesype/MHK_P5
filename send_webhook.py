@@ -100,7 +100,8 @@ def send_to_webhook(dossier_info, pdf_files):
             'nouveau_statut': dossier_info.get('nouveau_statut', ''),
             'ancienne_categorie': dossier_info.get('ancienne_categorie', ''),
             'nouvelle_categorie': dossier_info.get('nouvelle_categorie', ''),
-            'nb_fichiers': dossier_info.get('nb_fichiers', len(files))
+            'nb_fichiers': dossier_info.get('nb_fichiers', len(files)),
+            'pdf_urls': json.dumps(dossier_info.get('pdf_urls', []), ensure_ascii=False)
         }
         
         # Ajouter test_mode si présent
