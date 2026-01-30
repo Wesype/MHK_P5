@@ -1,0 +1,18 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# Copier les fichiers nécessaires
+COPY requirements.txt .
+COPY api_pdfs.py .
+COPY db_postgres.py .
+COPY .env* ./
+
+# Installer les dépendances (seulement ce qui est nécessaire pour l'API)
+RUN pip install --no-cache-dir flask psycopg2-binary python-dotenv
+
+# Exposer le port
+EXPOSE 5000
+
+# Démarrer l'API
+CMD ["python", "api_pdfs.py"]
