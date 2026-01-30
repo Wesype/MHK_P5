@@ -99,11 +99,11 @@ def save_pdf_to_db(numero_dossier, pdf_path):
         print(f"❌ Erreur sauvegarde PDF {nom_fichier}: {e}")
         return None
 
-def get_pdf_url(pdf_id, base_url=None):
+def get_pdf_url(pdf_id, numero_dossier, base_url=None):
     """Générer l'URL d'accès à un PDF"""
     if base_url is None:
         base_url = os.getenv('API_BASE_URL', 'https://your-app.up.railway.app')
-    return f"{base_url}/pdf/{pdf_id}"
+    return f"{base_url}/pdf/{numero_dossier}/{pdf_id}"
 
 def init_database():
     """Initialiser la base de données PostgreSQL"""

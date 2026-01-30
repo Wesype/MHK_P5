@@ -42,9 +42,9 @@ def health():
     """Endpoint de santé"""
     return jsonify({'status': 'ok'})
 
-@app.route('/pdf/<int:pdf_id>')
-def get_pdf(pdf_id):
-    """Récupérer un PDF par son ID"""
+@app.route('/pdf/<numero>/<int:pdf_id>')
+def get_pdf(numero, pdf_id):
+    """Récupérer un PDF par son numéro de dossier et ID"""
     try:
         conn = get_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -52,8 +52,8 @@ def get_pdf(pdf_id):
         cur.execute("""
             SELECT nom_fichier, contenu, taille
             FROM pdfs
-            WHERE id = %s
-        """, (pdf_id,))
+            WHERE id = %s AND numero_dossier = %s
+        """, (pdf_id, numero))
         
         pdf = cur.fetchone()
         cur.close()
@@ -96,7 +96,7 @@ def get_dossier_pdfs(numero):
         # Construire les URLs
         base_url = os.getenv('API_BASE_URL', 'http://localhost:5000')
         for pdf in pdfs:
-            pdf['url'] = f"{base_url}/pdf/{pdf['id']}"
+            pdf['url'] = f"{base_url}/pdf/{numero}/{pdf['id']}"
             pdf['date_upload'] = pdf['date_upload'].isoformat() if pdf['date_upload'] else None
         
         return jsonify({
