@@ -138,6 +138,46 @@ async def download_dossier_pdfs(numero_dossier, session_id="demarches_session"):
                 file_name = os.path.basename(file_path)
                 print(f"   📄 {file_name} ({file_size:,} octets)")
             
+            # Sauvegarder dans PostgreSQL
+            print(f"\n💾 Sauvegarde dans PostgreSQL...")
+            from db_postgres import save_pdf_to_db, get_pdf_url
+            import shutil
+            
+            pdf_urls = []
+            for pdf_path in unique_files:
+                pdf_id = save_pdf_to_db(numero_dossier, pdf_path)
+                if pdf_id:
+                    url = get_pdf_url(pdf_id)
+                    pdf_urls.append({
+                        'nom': os.path.basename(pdf_path),
+                        'url': url,
+                        'id': pdf_id
+                    })
+                    print(f"   💾 {os.path.basename(pdf_path)} → PostgreSQL (ID: {pdf_id})")
+            
+            # Envoyer au webhook avec URLs
+            print(f"\n📤 Envoi au webhook...")
+            dossier_info = {
+                'numero': numero_dossier,
+                'type_changement': 'test',
+                'nb_fichiers': len(unique_files),
+                'pdf_urls': pdf_urls
+            }
+            response = send_to_webhook(dossier_info, unique_files)
+            
+            if response and response.status_code == 200:
+                print(f"✅ Envoyé avec succès au webhook")
+                
+                # Supprimer les fichiers locaux
+                try:
+                    shutil.rmtree(download_path)
+                    print(f"🗑️  Fichiers locaux supprimés")
+                except Exception as e:
+                    print(f"⚠️  Erreur suppression: {e}")
+            else:
+                status = response.status_code if response else "Aucune réponse"
+                print(f"⚠️  Erreur webhook: {status}")
+            
             return unique_files
         else:
             print(f"⚠️  Aucun fichier téléchargé")
