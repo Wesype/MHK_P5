@@ -381,7 +381,7 @@ async def main():
             # Télécharger les PDFs et envoyer au webhook (tout en un)
             print("\n📥 Téléchargement des PDFs et envoi au webhook...")
             from download_pdfs import download_changed_dossiers
-            await download_changed_dossiers()
+            await download_changed_dossiers(changements_list=changements)
     else:
         print("❌ Aucun dossier trouvé")
 

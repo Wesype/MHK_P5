@@ -138,31 +138,6 @@ async def download_dossier_pdfs(numero_dossier, session_id="demarches_session"):
                 file_name = os.path.basename(file_path)
                 print(f"   📄 {file_name} ({file_size:,} octets)")
             
-            # Envoyer au webhook
-            print(f"\n📤 Envoi au webhook...")
-            dossier_info = {
-                'numero': numero_dossier,
-                'type_changement': 'test',
-                'nb_fichiers': len(unique_files)
-            }
-            response = send_to_webhook(dossier_info, unique_files)
-            
-            if response and response.status_code == 200:
-                print(f"✅ Envoyé avec succès au webhook")
-                
-                # Supprimer les fichiers après envoi réussi
-                print(f"🗑️  Suppression des fichiers...")
-                import shutil
-                try:
-                    shutil.rmtree(download_path)
-                    print(f"✅ Dossier {numero_dossier} supprimé")
-                except Exception as e:
-                    print(f"⚠️  Erreur lors de la suppression: {e}")
-            else:
-                status = response.status_code if response else "Aucune réponse"
-                print(f"⚠️  Erreur webhook: {status}")
-                print(f"📁 Fichiers conservés dans: {download_path}")
-            
             return unique_files
         else:
             print(f"⚠️  Aucun fichier téléchargé")
@@ -198,19 +173,23 @@ async def download_multiple_dossiers(numeros_dossiers):
     
     return results
 
-async def download_changed_dossiers(changements_file='changements.json'):
+async def download_changed_dossiers(changements_list=None, changements_file='changements.json'):
     """
     Télécharge les PDFs de tous les dossiers qui ont changé
     
     Args:
-        changements_file: Fichier JSON contenant les changements détectés
+        changements_list: Liste des changements (prioritaire)
+        changements_file: Fichier JSON contenant les changements (fallback)
     """
-    if not os.path.exists(changements_file):
-        print(f"❌ Fichier {changements_file} introuvable")
+    # Priorité à la liste passée en paramètre
+    if changements_list is not None:
+        changements = changements_list
+    elif os.path.exists(changements_file):
+        with open(changements_file, 'r', encoding='utf-8') as f:
+            changements = json.load(f)
+    else:
+        print(f"❌ Aucun changement fourni")
         return
-    
-    with open(changements_file, 'r', encoding='utf-8') as f:
-        changements = json.load(f)
     
     if not changements:
         print("✅ Aucun changement détecté")
@@ -263,6 +242,12 @@ async def download_changed_dossiers(changements_file='changements.json'):
         numero = changement['numero']
         pdf_files = results.get(numero, [])
         
+        if not pdf_files:
+            print(f"⚠️  Dossier {numero}: aucun PDF téléchargé")
+            continue
+        
+        print(f"\n📦 Traitement dossier {numero} ({len(pdf_files)} PDFs)")
+        
         # Sauvegarder les PDFs dans PostgreSQL et récupérer les URLs
         pdf_urls = []
         for pdf_path in pdf_files:
@@ -289,21 +274,22 @@ async def download_changed_dossiers(changements_file='changements.json'):
         }
         
         # Envoyer au webhook avec PDFs + infos + URLs
+        print(f"   📤 Envoi au webhook...")
         response = send_to_webhook(dossier_info, pdf_files)
         
         if response and response.status_code == 200:
             success_count += 1
             
             # Supprimer les fichiers locaux après envoi réussi
-            if pdf_files:
-                download_path = os.path.join(os.getcwd(), "downloads", numero)
-                try:
-                    shutil.rmtree(download_path)
-                    print(f"   🗑️  Fichiers locaux supprimés")
-                except Exception as e:
-                    print(f"   ⚠️  Erreur suppression: {e}")
+            download_path = os.path.join(os.getcwd(), "downloads", numero)
+            try:
+                shutil.rmtree(download_path)
+                print(f"   🗑️  Fichiers locaux supprimés")
+            except Exception as e:
+                print(f"   ⚠️  Erreur suppression: {e}")
         else:
             error_count += 1
+            print(f"   ⚠️  Échec envoi webhook - fichiers conservés")
         
         # Petit délai entre chaque envoi
         await asyncio.sleep(1)
