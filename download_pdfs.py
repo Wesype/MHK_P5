@@ -247,71 +247,66 @@ async def download_changed_dossiers(changements_file='changements.json'):
     print(f"   Total fichiers: {sum(len(files) for files in results.values())}")
     print(f"   Rapport: rapport_telechargements.json")
     
-    # Envoyer au webhook par batch de 10
+    # Sauvegarder les PDFs dans PostgreSQL et envoyer au webhook
     print(f"\n{'='*60}")
-    print(f"📤 Envoi au webhook (batch de 10 max)")
+    print(f"💾 Sauvegarde PDFs dans PostgreSQL et envoi webhook")
     print(f"{'='*60}\n")
     
-    from send_webhook import send_batch_to_webhook
+    from send_webhook import send_to_webhook
+    from db_postgres import save_pdf_to_db, get_pdf_url
     import shutil
     
     success_count = 0
     error_count = 0
-    batch_size = 10
-    total_changements = len(changements)
     
-    for i in range(0, total_changements, batch_size):
-        batch = changements[i:i + batch_size]
-        batch_num = (i // batch_size) + 1
-        total_batches = (total_changements + batch_size - 1) // batch_size
+    for changement in changements:
+        numero = changement['numero']
+        pdf_files = results.get(numero, [])
         
-        print(f"📦 Batch {batch_num}/{total_batches} ({len(batch)} dossiers)")
+        # Sauvegarder les PDFs dans PostgreSQL et récupérer les URLs
+        pdf_urls = []
+        for pdf_path in pdf_files:
+            pdf_id = save_pdf_to_db(numero, pdf_path)
+            if pdf_id:
+                url = get_pdf_url(pdf_id)
+                pdf_urls.append({
+                    'nom': os.path.basename(pdf_path),
+                    'url': url,
+                    'id': pdf_id
+                })
+                print(f"   💾 {os.path.basename(pdf_path)} → PostgreSQL (ID: {pdf_id})")
         
-        # Préparer le batch pour l'envoi groupé
-        dossiers_batch = []
-        for changement in batch:
-            numero = changement['numero']
-            pdf_files = results.get(numero, [])
-            
-            dossiers_batch.append({
-                'info': {
-                    'numero': numero,
-                    'type_changement': changement.get('type'),
-                    'ancien_statut': changement.get('ancien_statut'),
-                    'nouveau_statut': changement.get('nouveau_statut'),
-                    'ancienne_categorie': changement.get('ancienne_categorie'),
-                    'nouvelle_categorie': changement.get('nouvelle_categorie'),
-                    'nb_fichiers': len(pdf_files)
-                },
-                'pdf_files': pdf_files
-            })
+        # Préparer les infos complètes du dossier avec URLs
+        dossier_info = {
+            'numero': numero,
+            'type_changement': changement.get('type'),
+            'ancien_statut': changement.get('ancien_statut', ''),
+            'nouveau_statut': changement.get('nouveau_statut', ''),
+            'ancienne_categorie': changement.get('ancienne_categorie', ''),
+            'nouvelle_categorie': changement.get('nouvelle_categorie', ''),
+            'nb_fichiers': len(pdf_files),
+            'pdf_urls': pdf_urls  # Ajouter les URLs des PDFs
+        }
         
-        # Envoyer tout le batch en une seule fois
-        response = send_batch_to_webhook(dossiers_batch)
+        # Envoyer au webhook avec PDFs + infos + URLs
+        response = send_to_webhook(dossier_info, pdf_files)
         
         if response and response.status_code == 200:
-            success_count += len(batch)
+            success_count += 1
             
-            # Supprimer les fichiers après envoi réussi
-            print(f"🗑️  Suppression des fichiers du batch...")
-            for changement in batch:
-                numero = changement['numero']
-                pdf_files = results.get(numero, [])
-                if pdf_files:
-                    download_path = os.path.join(os.getcwd(), "downloads", numero)
-                    try:
-                        shutil.rmtree(download_path)
-                        print(f"   ✓ Dossier {numero} supprimé")
-                    except Exception as e:
-                        print(f"   ⚠️  Erreur suppression {numero}: {e}")
+            # Supprimer les fichiers locaux après envoi réussi
+            if pdf_files:
+                download_path = os.path.join(os.getcwd(), "downloads", numero)
+                try:
+                    shutil.rmtree(download_path)
+                    print(f"   🗑️  Fichiers locaux supprimés")
+                except Exception as e:
+                    print(f"   ⚠️  Erreur suppression: {e}")
         else:
-            error_count += len(batch)
-            print(f"⚠️  Échec de l'envoi du batch - fichiers conservés")
+            error_count += 1
         
-        # Petit délai entre les batches
-        if i + batch_size < total_changements:
-            print(f"⏸️  Pause de 2s avant le prochain batch...\n")
-            await asyncio.sleep(2)
+        # Petit délai entre chaque envoi
+        await asyncio.sleep(1)
     
     print(f"\n{'='*60}")
     print(f"📊 Résumé webhook")

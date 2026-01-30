@@ -55,6 +55,56 @@ def get_connection():
     """Créer une connexion à PostgreSQL"""
     return psycopg2.connect(**DB_CONFIG)
 
+def save_pdf_to_db(numero_dossier, pdf_path):
+    """
+    Sauvegarder un PDF dans PostgreSQL
+    
+    Args:
+        numero_dossier: Numéro du dossier
+        pdf_path: Chemin vers le fichier PDF
+    
+    Returns:
+        ID du PDF inséré ou None en cas d'erreur
+    """
+    try:
+        if not os.path.exists(pdf_path):
+            print(f"⚠️  Fichier introuvable: {pdf_path}")
+            return None
+        
+        conn = get_connection()
+        cur = conn.cursor()
+        
+        # Lire le contenu du PDF
+        with open(pdf_path, 'rb') as f:
+            pdf_content = f.read()
+        
+        nom_fichier = os.path.basename(pdf_path)
+        taille = len(pdf_content)
+        
+        # Insérer dans la base
+        cur.execute("""
+            INSERT INTO pdfs (numero_dossier, nom_fichier, contenu, taille)
+            VALUES (%s, %s, %s, %s)
+            RETURNING id
+        """, (numero_dossier, nom_fichier, pdf_content, taille))
+        
+        pdf_id = cur.fetchone()[0]
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        return pdf_id
+        
+    except Exception as e:
+        print(f"❌ Erreur sauvegarde PDF {nom_fichier}: {e}")
+        return None
+
+def get_pdf_url(pdf_id, base_url=None):
+    """Générer l'URL d'accès à un PDF"""
+    if base_url is None:
+        base_url = os.getenv('API_BASE_URL', 'https://your-app.up.railway.app')
+    return f"{base_url}/pdf/{pdf_id}"
+
 def init_database():
     """Initialiser la base de données PostgreSQL"""
     conn = get_connection()
@@ -101,6 +151,31 @@ def init_database():
         BEFORE UPDATE ON dossiers 
         FOR EACH ROW 
         EXECUTE FUNCTION update_updated_at_column();
+    ''')
+    
+    # Créer la table pour les PDFs
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS pdfs (
+            id SERIAL PRIMARY KEY,
+            numero_dossier VARCHAR(20) NOT NULL,
+            nom_fichier TEXT NOT NULL,
+            contenu BYTEA NOT NULL,
+            taille INTEGER NOT NULL,
+            date_upload TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (numero_dossier) REFERENCES dossiers(numero) ON DELETE CASCADE
+        )
+    ''')
+    
+    # Index pour recherche rapide par dossier
+    cur.execute('''
+        CREATE INDEX IF NOT EXISTS idx_pdfs_numero_dossier 
+        ON pdfs(numero_dossier)
+    ''')
+    
+    # Index pour recherche par date
+    cur.execute('''
+        CREATE INDEX IF NOT EXISTS idx_pdfs_date_upload 
+        ON pdfs(date_upload DESC)
     ''')
     
     conn.commit()
