@@ -42,18 +42,21 @@ def health():
     """Endpoint de santé"""
     return jsonify({'status': 'ok'})
 
-@app.route('/pdf/<numero>/<int:pdf_id>')
-def get_pdf(numero, pdf_id):
-    """Récupérer un PDF par son numéro de dossier et ID"""
+@app.route('/pdf/<numero>/<path:nom_fichier>')
+def get_pdf(numero, nom_fichier):
+    """Récupérer un PDF par son numéro de dossier et nom de fichier"""
     try:
+        from urllib.parse import unquote
+        nom_fichier = unquote(nom_fichier)
+        
         conn = get_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
         
         cur.execute("""
             SELECT nom_fichier, contenu, taille
             FROM pdfs
-            WHERE id = %s AND numero_dossier = %s
-        """, (pdf_id, numero))
+            WHERE numero_dossier = %s AND nom_fichier = %s
+        """, (numero, nom_fichier))
         
         pdf = cur.fetchone()
         cur.close()

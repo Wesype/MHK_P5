@@ -55,16 +55,42 @@ def get_connection():
     """Créer une connexion à PostgreSQL"""
     return psycopg2.connect(**DB_CONFIG)
 
+def sanitize_filename(filename, max_length=100):
+    """
+    Nettoyer et raccourcir un nom de fichier
+    
+    Args:
+        filename: Nom du fichier original
+        max_length: Longueur maximale
+    
+    Returns:
+        Nom de fichier nettoyé
+    """
+    import re
+    # Enlever l'extension
+    name, ext = os.path.splitext(filename)
+    
+    # Remplacer les caractères spéciaux par des tirets
+    name = re.sub(r'[^\w\s-]', '', name)
+    name = re.sub(r'[-\s]+', '-', name)
+    name = name.strip('-')
+    
+    # Raccourcir si nécessaire
+    if len(name) > max_length:
+        name = name[:max_length].rsplit('-', 1)[0]  # Couper au dernier tiret
+    
+    return name + ext
+
 def save_pdf_to_db(numero_dossier, pdf_path):
     """
-    Sauvegarder un PDF dans PostgreSQL
+    Sauvegarder un PDF dans PostgreSQL (remplace si existe déjà)
     
     Args:
         numero_dossier: Numéro du dossier
         pdf_path: Chemin vers le fichier PDF
     
     Returns:
-        ID du PDF inséré ou None en cas d'erreur
+        Nom du fichier nettoyé ou None en cas d'erreur
     """
     try:
         if not os.path.exists(pdf_path):
@@ -78,32 +104,49 @@ def save_pdf_to_db(numero_dossier, pdf_path):
         with open(pdf_path, 'rb') as f:
             pdf_content = f.read()
         
-        nom_fichier = os.path.basename(pdf_path)
+        nom_fichier_original = os.path.basename(pdf_path)
+        nom_fichier_clean = sanitize_filename(nom_fichier_original)
         taille = len(pdf_content)
         
-        # Insérer dans la base
+        # Vérifier si le fichier existe déjà
         cur.execute("""
-            INSERT INTO pdfs (numero_dossier, nom_fichier, contenu, taille)
-            VALUES (%s, %s, %s, %s)
-            RETURNING id
-        """, (numero_dossier, nom_fichier, pdf_content, taille))
+            SELECT id FROM pdfs 
+            WHERE numero_dossier = %s AND nom_fichier = %s
+        """, (numero_dossier, nom_fichier_clean))
         
-        pdf_id = cur.fetchone()[0]
+        existing = cur.fetchone()
+        
+        if existing:
+            # Mettre à jour le fichier existant
+            cur.execute("""
+                UPDATE pdfs 
+                SET contenu = %s, taille = %s, date_upload = CURRENT_TIMESTAMP
+                WHERE numero_dossier = %s AND nom_fichier = %s
+            """, (pdf_content, taille, numero_dossier, nom_fichier_clean))
+        else:
+            # Insérer un nouveau fichier
+            cur.execute("""
+                INSERT INTO pdfs (numero_dossier, nom_fichier, contenu, taille)
+                VALUES (%s, %s, %s, %s)
+            """, (numero_dossier, nom_fichier_clean, pdf_content, taille))
+        
         conn.commit()
         cur.close()
         conn.close()
         
-        return pdf_id
+        return nom_fichier_clean
         
     except Exception as e:
-        print(f"❌ Erreur sauvegarde PDF {nom_fichier}: {e}")
+        print(f"❌ Erreur sauvegarde PDF: {e}")
         return None
 
-def get_pdf_url(pdf_id, numero_dossier, base_url=None):
+def get_pdf_url(nom_fichier, numero_dossier, base_url=None):
     """Générer l'URL d'accès à un PDF"""
     if base_url is None:
         base_url = os.getenv('API_BASE_URL', 'https://your-app.up.railway.app')
-    return f"{base_url}/pdf/{numero_dossier}/{pdf_id}"
+    # Encoder le nom du fichier pour l'URL
+    from urllib.parse import quote
+    return f"{base_url}/pdf/{numero_dossier}/{quote(nom_fichier)}"
 
 def init_database():
     """Initialiser la base de données PostgreSQL"""

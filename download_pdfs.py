@@ -148,15 +148,14 @@ async def download_dossier_pdfs(numero_dossier, session_id="demarches_session", 
                 if save_to_db:
                     print(f"\n💾 Sauvegarde dans PostgreSQL...")
                     for pdf_path in unique_files:
-                        pdf_id = save_pdf_to_db(numero_dossier, pdf_path)
-                        if pdf_id:
-                            url = get_pdf_url(pdf_id, numero_dossier)
+                        nom_fichier_clean = save_pdf_to_db(numero_dossier, pdf_path)
+                        if nom_fichier_clean:
+                            url = get_pdf_url(nom_fichier_clean, numero_dossier)
                             pdf_urls.append({
-                                'nom': os.path.basename(pdf_path),
-                                'url': url,
-                                'id': pdf_id
+                                'nom': nom_fichier_clean,
+                                'url': url
                             })
-                            print(f"   💾 {os.path.basename(pdf_path)} → PostgreSQL (ID: {pdf_id})")
+                            print(f"   💾 {nom_fichier_clean} → PostgreSQL")
                 
                 if send_webhook:
                     # Envoyer au webhook avec URLs
@@ -293,15 +292,14 @@ async def download_changed_dossiers(changements_list=None, changements_file='cha
         # Sauvegarder les PDFs dans PostgreSQL et récupérer les URLs
         pdf_urls = []
         for pdf_path in pdf_files:
-            pdf_id = save_pdf_to_db(numero, pdf_path)
-            if pdf_id:
-                url = get_pdf_url(pdf_id, numero)
+            nom_fichier_clean = save_pdf_to_db(numero, pdf_path)
+            if nom_fichier_clean:
+                url = get_pdf_url(nom_fichier_clean, numero)
                 pdf_urls.append({
-                    'nom': os.path.basename(pdf_path),
-                    'url': url,
-                    'id': pdf_id
+                    'nom': nom_fichier_clean,
+                    'url': url
                 })
-                print(f"   💾 {os.path.basename(pdf_path)} → PostgreSQL (ID: {pdf_id})")
+                print(f"   💾 {nom_fichier_clean} → PostgreSQL")
         
         # Préparer les infos complètes du dossier avec URLs
         dossier_info = {
